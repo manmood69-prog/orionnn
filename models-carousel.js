@@ -18,6 +18,12 @@ const modelsData = [
         title: 'Orange Pro',
         description: 'Advanced classification system for oranges.',
         images: ['orange-1.jpg', 'orange-2.jpg', 'orange-3.jpg']
+    },
+    {
+        emoji: '📷',
+        title: 'Open Camera',
+        description: 'Capture real-time images directly from your device camera.',
+        images: ['camera-1.jpg', 'camera-2.jpg', 'camera-3.jpg']
     }
 ];
 
@@ -75,6 +81,16 @@ class ModelsCarousel {
                 this.switchModel(dataIndex);
             });
         });
+
+        // Focused card click (for camera option)
+        if (this.focusedCard) {
+            this.focusedCard.addEventListener('click', () => {
+                if (currentModelIndex === modelsData.length - 1) {
+                    // Camera model clicked
+                    this.openCamera();
+                }
+            });
+        }
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
@@ -147,6 +163,33 @@ class ModelsCarousel {
             const itemIndex = parseInt(item.getAttribute('data-index'));
             item.classList.toggle('active', itemIndex === index);
         });
+    }
+
+    openCamera() {
+        console.log('📷 Opening camera...');
+        // This will trigger the camera modal/functionality
+        const cameraModal = document.getElementById('camera-modal');
+        if (cameraModal) {
+            cameraModal.style.display = 'block';
+            this.initializeCamera();
+        } else {
+            alert('Camera functionality is not available in your current view.');
+        }
+    }
+
+    initializeCamera() {
+        const video = document.getElementById('camera-video');
+        if (!video) return;
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                console.log('✅ Camera initialized');
+            })
+            .catch(err => {
+                console.error('❌ Camera error:', err);
+                alert('Could not access camera. Please check permissions.');
+            });
     }
 }
 
