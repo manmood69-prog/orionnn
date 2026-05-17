@@ -603,6 +603,13 @@ class ModelsCarousel {
     }
 
     init() {
+        const timeout = setTimeout(() => {
+            if (!this.centerEmoji) {
+                console.warn('⚠️ Carousel elements not found. Make sure HTML structure is correct.');
+                clearTimeout(timeout);
+            }
+        }, 1000);
+
         this.centerEmoji = document.getElementById('center-emoji');
         this.centerTitle = document.getElementById('center-title');
         this.centerDescription = document.getElementById('center-description');
@@ -617,36 +624,66 @@ class ModelsCarousel {
         }
 
         console.log('✅ Carousel initialized');
+        console.log('   Side models found:', this.sideModels.length);
+        console.log('   Dots found:', this.dots.length);
+
         this.attachEventListeners();
         this.updateDisplay(currentModelIndex);
     }
 
     attachEventListeners() {
+        // Dot navigation
         this.dots.forEach((dot, index) => {
             dot.addEventListener('click', () => {
+                console.log('📍 Dot clicked:', index);
                 this.switchModel(index);
             });
         });
 
+        // Side model items click
         this.sideModels.forEach((item) => {
             item.addEventListener('click', () => {
                 const dataIndex = parseInt(item.getAttribute('data-index'));
+                console.log('👆 Side model clicked, index:', dataIndex);
                 this.switchModel(dataIndex);
             });
         });
 
+        // Focused card click (for camera option)
+        if (this.focusedCard) {
+            this.focusedCard.addEventListener('click', () => {
+                if (currentModelIndex === modelsData.length - 1) {
+                    // Camera model clicked
+                    this.openCamera();
+                }
+            });
+        }
+
+        // Keyboard navigation
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') this.switchModel(currentModelIndex - 1);
-            if (e.key === 'ArrowRight') this.switchModel(currentModelIndex + 1);
+            if (e.key === 'ArrowLeft') {
+                console.log('⬅️ Arrow left pressed');
+                this.switchModel(currentModelIndex - 1);
+            }
+            if (e.key === 'ArrowRight') {
+                console.log('➡️ Arrow right pressed');
+                this.switchModel(currentModelIndex + 1);
+            }
         });
     }
 
     switchModel(newIndex) {
+        // Wrap around
         if (newIndex < 0) newIndex = modelsData.length - 1;
         if (newIndex >= modelsData.length) newIndex = 0;
 
-        if (newIndex === currentModelIndex) return;
+        if (newIndex === currentModelIndex) {
+            return;
+        }
 
+        console.log('🔄 Switching from', modelsData[currentModelIndex].title, 'to', modelsData[newIndex].title);
+
+        // Add transition out
         if (this.focusedCard) {
             this.focusedCard.classList.add('transition-out');
         }
@@ -669,27 +706,61 @@ class ModelsCarousel {
     updateDisplay(index) {
         const model = modelsData[index];
 
+        console.log('📝 Updating display for:', model.title);
+
+        // Update center card
         if (this.centerEmoji) this.centerEmoji.textContent = model.emoji;
         if (this.centerTitle) this.centerTitle.textContent = model.title;
         if (this.centerDescription) this.centerDescription.textContent = model.description;
 
+        // Update images
         if (this.modelImages) {
             this.modelImages.innerHTML = model.images
                 .map(img => `<img src="${img}" alt="${model.title} visualization" class="model-img">`)
                 .join('');
         }
 
+        // Update dots
         this.dots.forEach((dot, i) => {
             dot.classList.toggle('active', i === index);
         });
 
+        // Update side models highlight
         this.sideModels.forEach((item) => {
             const itemIndex = parseInt(item.getAttribute('data-index'));
             item.classList.toggle('active', itemIndex === index);
         });
     }
+
+    openCamera() {
+        console.log('📷 Opening camera...');
+        // This will trigger the camera modal/functionality
+        const cameraModal = document.getElementById('camera-modal');
+        if (cameraModal) {
+            cameraModal.style.display = 'block';
+            this.initializeCamera();
+        } else {
+            alert('Camera functionality is not available in your current view.');
+        }
+    }
+
+    initializeCamera() {
+        const video = document.getElementById('camera-video');
+        if (!video) return;
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                console.log('✅ Camera initialized');
+            })
+            .catch(err => {
+                console.error('❌ Camera error:', err);
+                alert('Could not access camera. Please check permissions.');
+            });
+    }
 }
 
+// Initialize carousel when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📦 DOM Content Loaded, initializing carousel...');
     new ModelsCarousel();
